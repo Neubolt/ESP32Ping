@@ -52,8 +52,6 @@ public:
 
     bool ping(const char *host, byte count = 5);
 
-    float averageTime();
-
 protected:
     static void _ping_sent_cb(void *opt, void *pdata);
 
@@ -63,7 +61,6 @@ protected:
     ping_option _options;
 
     static byte _expected_count, _errors, _success;
-    static float _avg_time;
 };
 
 

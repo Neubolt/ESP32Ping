@@ -16,12 +16,10 @@ struct ping_option {
 
 struct ping_resp {
     uint32_t total_count;
-    float resp_time;
     uint32_t seqno;
     uint32_t timeout_count;
     uint32_t bytes;
     uint32_t total_bytes;
-    float total_time;
     int8_t  ping_err;
 };
 

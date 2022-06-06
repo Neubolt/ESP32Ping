@@ -86,11 +86,6 @@ static uint8_t stopped = 0;
 */
 static uint32_t transmitted = 0;
 static uint32_t received = 0;
-static float min_time = 0;
-static float max_time = 0;
-static float mean_time = 0;
-static float last_mean_time = 0;
-static float var_time = 0;
 
 #define PING_ID 0xAFAF
 
@@ -165,7 +160,6 @@ static void ping_recv(int s) {
     struct timeval end;
     uint64_t micros_begin;
     uint64_t micros_end;
-    float elapsed;
 
     // Register begin time
     gettimeofday(&begin, NULL);
@@ -196,30 +190,6 @@ static void ping_recv(int s) {
 
                 micros_end = end.tv_sec * 1000000;
                 micros_end += end.tv_usec;
-
-                elapsed = (float)(micros_end - micros_begin) / (float)1000.0;
-
-                // Update statistics
-                // Mean and variance are computed in an incremental way
-                if (elapsed < min_time) {
-                    min_time = elapsed;
-                }
-
-                if (elapsed > max_time) {
-                    max_time = elapsed;
-                }
-
-                last_mean_time = mean_time;
-                mean_time = (((received - 1) * mean_time) + elapsed) / received;
-
-                if (received > 1) {
-                    var_time = var_time + ((elapsed - last_mean_time) * (elapsed - mean_time));
-                }
-
-                // Print ...
-                log_d("%d bytes from %s: icmp_seq=%d time=%.3f ms\r\n", len, ipa,
-                      ntohs(iecho->seqno), elapsed
-                );
 
                 return;
             }
@@ -309,10 +279,6 @@ bool ping_start(IPAddress adr, int count=0, int interval=0, int size=0, int time
     stopped = 0;
     transmitted = 0;
     received = 0;
-    min_time = 1.E+9;// FLT_MAX;
-    max_time = 0.0;
-    mean_time = 0.0;
-    var_time = 0.0;
 
     // Register signal for stop ping
     //signal(SIGINT, stop_action);
@@ -325,7 +291,6 @@ bool ping_start(IPAddress adr, int count=0, int interval=0, int size=0, int time
 
     ping_seq_num = 0;
     
-    unsigned long ping_started_time = millis();
     while ((ping_seq_num < count) && (!stopped)) {
         if (ping_send(s, &ping_target, size) == ERR_OK) {
             ping_recv(s);
@@ -346,14 +311,11 @@ bool ping_start(IPAddress adr, int count=0, int interval=0, int size=0, int time
     
     if (ping_o) {
         ping_resp pingresp;
-        log_i("round-trip min/avg/max/stddev = %.3f/%.3f/%.3f/%.3f ms\r\n", min_time, mean_time, max_time, sqrt(var_time / received));
         pingresp.total_count = count; //Number of pings
-        pingresp.resp_time = mean_time; //Average time for the pings
         pingresp.seqno = 0; //not relevant
         pingresp.timeout_count = transmitted - received; //number of pings which failed
         pingresp.bytes = size; //number of bytes received for 1 ping
         pingresp.total_bytes = size * count; //number of bytes for all pings
-        pingresp.total_time = (millis() - ping_started_time) / 1000.0; //Time consumed for all pings; it takes into account also timeout pings
         pingresp.ping_err = transmitted - received; //number of pings failed
         // Call the callback function
         ping_o->recv_function(ping_o, &pingresp);
