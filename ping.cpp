@@ -287,7 +287,7 @@ bool ping_start(IPAddress adr, int count=0, int interval=0, int size=0, int time
     char ipa[16];
 
     strcpy(ipa, inet_ntoa(ping_target));
-    log_i("PING %s: %d data bytes\r\n",  ipa, size);
+    // log_i("PING %s: %d data bytes\r\n",  ipa, size);
 
     ping_seq_num = 0;
     
@@ -302,11 +302,11 @@ bool ping_start(IPAddress adr, int count=0, int interval=0, int size=0, int time
 
     closesocket(s);
 
-    log_i("%d packets transmitted, %d packets received, %.1f%% packet loss\r\n",
-          transmitted,
-          received,
-          ((((float)transmitted - (float)received) / (float)transmitted) * 100.0)
-    );
+    // log_i("%d packets transmitted, %d packets received, %.1f%% packet loss\r\n",
+    //       transmitted,
+    //       received,
+    //       ((((float)transmitted - (float)received) / (float)transmitted) * 100.0)
+    // );
     
     
     if (ping_o) {
